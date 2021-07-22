@@ -1,5 +1,6 @@
 import React from 'react';
 import {
+  Button,
   CircularProgress,
   Container,
   FormControl,
@@ -60,15 +61,16 @@ const CoursesPage = () => {
   const [loading, setLoading] = useState(false);
 
   const [sliderMax, setSliderMax] = useState(50);
-  const [priceRange, setPriceRange] = useState([5, 35]);
+  const [priceRange, setPriceRange] = useState([5, 50]);
   const [filter, setFilter] = useState('');
-  const [priceOrder, setPriceOrder] = useState('desc');
+  const [priceOrder, setPriceOrder] = useState('descending');
+  const [sorting, setSorting] = useState('');
 
   const updateUiValues = (uiValues) => {
     setSliderMax(uiValues.maxPrice);
     if (uiValues.filtering.price) {
       let priceFilter = uiValues.filtering.price;
-      setPriceRange(Number(priceFilter.gte), Number(priceFilter.lte));
+      setPriceRange([Number(priceFilter.gte), Number(priceFilter.lte)]);
     }
 
     if (uiValues.sorting.price) {
@@ -91,6 +93,15 @@ const CoursesPage = () => {
         } else {
           query = filter;
         }
+
+        if (sorting) {
+          if (query.length === 0) {
+            query = `?sort=${sorting}`;
+          } else {
+            query = query + `&sort=${sorting}`;
+          }
+        }
+
         const { data } = await axios({
           method: 'GET',
           url: `/api/courses${query}`,
@@ -112,7 +123,7 @@ const CoursesPage = () => {
 
     // in order not to call the API twice
     return () => cancel();
-  }, [filter, params]);
+  }, [filter, params, sorting]);
 
   const priceInputHandler = (e, type) => {
     let newRange;
@@ -148,6 +159,24 @@ const CoursesPage = () => {
     setFilter(urlFilter);
 
     history.push(urlFilter);
+  };
+
+  const sortChangeHandler = (e) => {
+    setPriceOrder((val) => (val = e.target.value));
+
+    if (e.target.value === 'ascending') {
+      setSorting('price');
+    } else if (e.target.value === 'descending') {
+      setSorting('-price');
+    }
+  };
+
+  // clear filters
+  const clearFilterHandler = () => {
+    setFilter('');
+    setSorting('');
+    setPriceRange([0, sliderMax]);
+    history.push('/');
   };
 
   return (
@@ -201,22 +230,34 @@ const CoursesPage = () => {
             <Typography gutterBottom>Sort By Price</Typography>
 
             <FormControl component='fieldset' className={classes.filters}>
-              <RadioGroup aria-label='price-order' name='price-order'>
-                {/* Lowest to Highest */}
-                <FormControlLabel
-                  disabled={loading}
-                  control={<Radio />}
-                  label='Lowest to Highest'></FormControlLabel>
-
+              <RadioGroup
+                aria-label='price-order'
+                name='price-order'
+                value={priceOrder}
+                onChange={sortChangeHandler}>
+                {/*  */}
                 {/* Highest to Lowest */}
                 <FormControlLabel
+                  value='descending'
                   disabled={loading}
                   control={<Radio />}
-                  label='Highes to Lowest'></FormControlLabel>
+                  label='Highes to Lowest'
+                />
+
+                {/* Lowest to Highest */}
+                <FormControlLabel
+                  value='ascending'
+                  disabled={loading}
+                  control={<Radio />}
+                  label='Lowest to Highest'
+                />
               </RadioGroup>
             </FormControl>
           </Grid>
         </Grid>
+        <Button size='small' color='primary' onClick={clearFilterHandler}>
+          Clear Filters
+        </Button>
       </Paper>
 
       {/* 2. List the data */}

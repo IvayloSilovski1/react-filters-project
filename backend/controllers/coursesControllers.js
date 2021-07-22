@@ -41,7 +41,7 @@ exports.getAllCourses = asyncHandler(async (req, res, next) => {
       let order;
       val[0] === '-' ? (order = 'descending') : (order = 'ascending');
 
-      uiValues.sorting[value.replace('-', '')] = order;
+      uiValues.sorting[val.replace('-', '')] = order;
     });
     const sortByStr = sortByArr.join(' ');
 
