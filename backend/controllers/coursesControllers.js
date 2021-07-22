@@ -35,7 +35,35 @@ exports.getAllCourses = asyncHandler(async (req, res, next) => {
 
   query = Courses.find(JSON.parse(queryStr));
 
+  if (req.query.sort) {
+    const sortByArr = req.query.sort.split(',');
+    sortByArr.forEach((val) => {
+      let order;
+      val[0] === '-' ? (order = 'descending') : (order = 'ascending');
+
+      uiValues.sorting[value.replace('-', '')] = order;
+    });
+    const sortByStr = sortByArr.join(' ');
+
+    query = query.sort(sortByStr);
+  } else {
+    query = query.sort('-price');
+  }
+
   const courses = await query;
+
+  const maxPrice = await Courses.find()
+    .sort({ price: -1 })
+    .limit(1)
+    .select('-_id price');
+
+  const minPrice = await Courses.find()
+    .sort({ price: 1 })
+    .limit(1)
+    .select('-_id price');
+
+  uiValues.maxPrice = maxPrice[0].price;
+  uiValues.minPrice = minPrice[0].price;
 
   res.status(200).json({
     success: true,
